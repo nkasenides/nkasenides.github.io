@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Nicos Kasenides | Home</title>
+    <title>Nicos Kasenides | SourceFusion</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="icon" href="images/nkasenides_logo.png">
@@ -38,11 +38,11 @@
         <h1 id="colorlib-logo"><a href="index.html">Nicos</a></h1>
         <nav id="colorlib-main-menu" role="navigation">
             <ul>
-                <li class="colorlib-active"><a href="index.html">Home</a></li>
+                <li><a href="index.html">Home</a></li>
                 <li><a href="research.html">Research</a></li>
                 <li><a href="software.html">Software</a></li>
                 <li><a href="blog.html">Blog</a></li>
-                <li><a href="about.html">About</a></li>
+                <li class="colorlib-active"><a href="about.html">About</a></li>
                 <li><a href="contact.html">Contact</a></li>
             </ul>
         </nav>
@@ -62,26 +62,44 @@
     </aside> <!-- END COLORLIB-ASIDE -->
 
 
-    <div id="colorlib-main">
-        <div class="hero-wrap" style="background-image: url(images/background.jpg);" data-stellar-background-ratio="0.5">
+    <div id="colorlib-main" style="background: url(images/background.jpg); background-repeat: repeat;">
+
+        <section class="ftco-section hero-wrap hero-wrap-2" data-stellar-background-ratio="0.5">
             <div class="overlay"></div>
-            <div class=" d-flex justify-content-center align-items-center">
-                <div class="col-md-8 text text-center">
-                    <h2 class="subheading mb-4 mt-5">Hello I'm</h2>
-                    <div class="img mb-4 mt-4" style="background-image: url(images/photo.jpg);"></div>
-                    <div class="desc">
-                        <h1 class="mb-4">Nicos Kasenides</h1>
-                        <p class="mb-4">I am a research associate at the <a href="https://www.uclancyprus.ac.cy/">University of
-                            Central Lancashire</a> and a PhD student specializing in
-                            <a href="https://en.wikipedia.org/wiki/Software_engineering">Software Engineering</a>, <a
-                                    href="https://en.wikipedia.org/wiki/Cloud_computing">Cloud computing</a> and <a
-                                    href="https://en.wikipedia.org/wiki/Distributed_computing">Distributed Systems</a>.</p>
-                        <p><a href="about.html" class="btn-custom">More About Me <span class="ion-ios-arrow-forward"></span></a>
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 offset-lg-2 col-sm-12">
+
+                        <h3>SourceFusion</h3>
+                        <p class="text-justify">
+                            SourceFusion is an in-development code-generation library which allows software engineers to abstractly
+                            define various entities (in a programming-language agnostic way)
+                            and then generate corresponding code in a set of specified programming languages or frameworks.
+
+                            The tool is aimed for use in distributed applications with mainly thin clients which are
+                            powered by web-based APIs. It features its own authentication framework and allows the generation of:
                         </p>
+
+                        <ul>
+                            <li>Entity classes (in C++, C#, Java, JavaScript, PHP).</li>
+                            <li>Database helpers (for MySQL w/ Java, MySQL w/ PHP, Google Datastore w/ Java).</li>
+                            <li>Web services (as Java Servlets or PHP endpoints).</li>
+                            <li>Forms (as HTML or Android forms).</li>
+                            <li>Documentation (in HTML).</li>
+                        </ul>
+
+                        <p class="text-justify">
+                            SourceFusion aims to relieve the software engineer from various development steps such as
+                            the authentication process, the creation of CRUD-style web services for each entity, web service
+                            documentation, form creation, client-side response processing and more, with the ultimate objective
+                            being to save effort and time that would be spent doing repetitive work in each project.
+                        </p>
+
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
+
     </div><!-- END COLORLIB-MAIN -->
 
 

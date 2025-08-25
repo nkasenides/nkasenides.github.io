@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        p {
+            margin: 0 0 1em 0 ;
+        }
+        .withLeftPadding {
+            margin-left: 20px;
+        }
+        .noMargin {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<p>Hello Nicos, </p>
+<p class="withLeftPadding">#SENDER_NAME# has contacted you via nkasenides.com.</p>
+<p class="withLeftPadding">#SENDER_NAME# wrote:</p>
+
+<div class="withLeftPadding" style="color: grey;">
+    <p><b><u>#SENDER_SUBJECT#</u></b></p>
+    <p><i>#SENDER_MESSAGE#</i></p>
+</div>
+
+<br/><br/>
+
+<a class="btn" href="mailto:#SENDER_EMAIL#?subject=#SENDER_SUBJECT#&body=Hello #SENDER_NAME#, ">Reply</a>
+
+<br/><br/><br/>
+
+<p class="noMargin">Best regards,</p>
+<p>Automated Contact System <small>(via nkasenides.com)</small></p>
+
+</body>
+</html>

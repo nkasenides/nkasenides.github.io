@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        p {
+            margin: 0 0 1em 0 ;
+        }
+        .withLeftPadding {
+            margin-left: 20px;
+        }
+        .noMargin {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<p>Hello #SENDER_NAME#, </p>
+<p class="withLeftPadding">Thank you for your email. I will be contacting you soon. </p>
+<p class="noMargin">Best regards,</p>
+<p>Nicos Kasenides <small>(via nkasenides.com)</small></p>
+
+<hr/>
+
+
+<div style="color: grey">
+    <p>You wrote:</p>
+    <p><b><u>#SENDER_SUBJECT#</u></b></p>
+    <p><i>#SENDER_MESSAGE#</i></p>
+</div>
+
+</body>
+</html>
