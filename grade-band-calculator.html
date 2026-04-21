@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Banded Mark Calculator</title>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+
+<style>
+
+body{
+background:#f5f5f5;
+}
+
+.container{
+margin-top:40px;
+max-width:750px;
+}
+
+.result-card{
+margin-top:25px;
+}
+
+.band-title{
+font-size:1.6rem;
+font-weight:500;
+}
+
+.band-mark{
+font-size:2.4rem;
+font-weight:600;
+margin-top:10px;
+}
+
+.helper-text{
+font-size:0.9rem;
+}
+
+textarea{
+font-family:monospace;
+}
+
+table{
+margin-top:20px;
+}
+
+</style>
+
+</head>
+
+
+
+<body>
+
+<div class="container">
+
+<h4 class="center-align">Grade Band Converter</h4>
+
+
+<div class="card">
+
+<div class="card-content">
+
+<div class="input-field">
+
+<input id="rawMark" type="number" min="0" max="100" step="0.1">
+
+<label for="rawMark">Crude mark (0–100)</label>
+
+<span class="helper-text">
+Single value → nearest grade band
+</span>
+
+</div>
+
+
+<div class="center-align">
+
+<button class="btn waves-effect waves-light" onclick="calculateBand()">
+
+Calculate
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<div id="resultCard" class="card result-card hide">
+
+<div id="resultColour" class="card-content white-text">
+
+<div id="bandName" class="band-title"></div>
+
+<div id="bandMark" class="band-mark"></div>
+
+<div id="distanceText"></div>
+
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<div class="card-content">
+
+<span class="card-title">Bulk conversion</span>
+
+<div class="input-field">
+
+<textarea id="bulkInput" class="materialize-textarea"></textarea>
+
+<label for="bulkInput">
+Paste marks from Excel (column or row)
+</label>
+
+<span class="helper-text">
+Accepts newline, comma, tab or space separated values
+</span>
+
+</div>
+
+
+<div class="center-align">
+
+<button class="btn blue waves-effect waves-light" onclick="processBulk()">
+
+Convert list
+
+</button>
+
+</div>
+
+
+<div id="bulkResults"></div>
+
+</div>
+
+</div>
+
+
+
+</div>
+
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+
+
+<script>
+
+const bands = [
+
+{ name:"Exceptional 1st", value:100, class:"1st", colour:"teal darken-3"},
+
+{ name:"Very High 1st", value:94, class:"1st", colour:"teal darken-3"},
+
+{ name:"High 1st", value:87, class:"1st", colour:"teal darken-3"},
+
+{ name:"Mid 1st", value:80, class:"1st", colour:"teal darken-3"},
+
+{ name:"Low 1st", value:74, class:"1st", colour:"teal darken-3"},
+
+
+
+{ name:"High 2.1", value:68, class:"2.1", colour:"blue darken-2"},
+
+{ name:"Mid 2.1", value:65, class:"2.1", colour:"blue darken-2"},
+
+{ name:"Low 2.1", value:62, class:"2.1", colour:"blue darken-2"},
+
+
+
+{ name:"High 2.2", value:58, class:"2.2", colour:"amber darken-2"},
+
+{ name:"Mid 2.2", value:55, class:"2.2", colour:"amber darken-2"},
+
+{ name:"Low 2.2", value:52, class:"2.2", colour:"amber darken-2"},
+
+
+
+{ name:"High 3rd", value:48, class:"3rd", colour:"green darken-2"},
+
+{ name:"Mid 3rd", value:45, class:"3rd", colour:"green darken-2"},
+
+{ name:"Low 3rd", value:42, class:"3rd", colour:"green darken-2"},
+
+
+
+{ name:"Marginal Fail", value:35, class:"Fail", colour:"red darken-2"},
+
+{ name:"Mid Fail", value:30, class:"Fail", colour:"red darken-2"},
+
+{ name:"Low Fail", value:25, class:"Fail", colour:"red darken-2"},
+
+{ name:"Fail", value:10, class:"Fail", colour:"red darken-2"},
+
+
+
+{ name:"No Academic Merit", value:0, class:"No credit", colour:"grey darken-2"}
+
+];
+
+
+
+function findClosestBand(raw){
+
+return bands.reduce((best,current)=>{
+
+let d1=Math.abs(raw-best.value);
+
+let d2=Math.abs(raw-current.value);
+
+
+
+if(d2<d1 || (d2===d1 && current.value>best.value)){
+
+return current;
+
+}
+
+
+
+return best;
+
+});
+
+}
+
+
+
+function calculateBand(){
+
+const raw=parseFloat(document.getElementById("rawMark").value);
+
+
+
+if(isNaN(raw) || raw<0 || raw>100){
+
+M.toast({html:"Enter value 0–100"});
+
+return;
+
+}
+
+
+
+let band=findClosestBand(raw);
+
+displaySingle(raw,band);
+
+}
+
+
+
+function displaySingle(raw,band){
+
+document.getElementById("resultCard").classList.remove("hide");
+
+
+
+let colourPanel=document.getElementById("resultColour");
+
+colourPanel.className="card-content white-text "+band.colour;
+
+
+
+document.getElementById("bandName").innerText=
+
+band.name+" ("+band.class+")";
+
+
+
+document.getElementById("bandMark").innerText=
+
+"Banded mark: "+band.value;
+
+
+
+let diff=(band.value-raw).toFixed(2);
+
+
+
+document.getElementById("distanceText").innerText=
+
+"Adjustment: "+(diff>=0?"+":"")+diff;
+
+}
+
+
+
+function processBulk(){
+
+let text=document.getElementById("bulkInput").value.trim();
+
+
+
+if(!text){
+
+return;
+
+}
+
+
+
+let values=text.split(/[\s,;\t\n]+/);
+
+
+
+let rows=[];
+
+
+
+values.forEach(v=>{
+
+let raw=parseFloat(v);
+
+
+
+if(!isNaN(raw)){
+
+let band=findClosestBand(raw);
+
+let diff=(band.value-raw).toFixed(2);
+
+
+
+rows.push(`
+
+<tr class="${band.colour} white-text">
+
+<td>${raw}</td>
+
+<td>${band.value}</td>
+
+<td>${band.name}</td>
+
+<td>${band.class}</td>
+
+<td>${diff>=0?"+":""}${diff}</td>
+
+</tr>
+
+`);
+
+}
+
+});
+
+
+
+document.getElementById("bulkResults").innerHTML=`
+
+<table class="striped">
+
+<thead>
+
+<tr>
+
+<th>Crude</th>
+
+<th>Banded</th>
+
+<th>Band</th>
+
+<th>Class</th>
+
+<th>Adjust</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+${rows.join("")}
+
+</tbody>
+
+</table>
+
+`;
+
+}
+
+
+
+</script>
+
+
+
+</body>
+
+</html>
