@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Grade Analysis</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- PWA manifest and theme color -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f8fafc">
+</head>
+<body class="antialiased bg-gray-50 min-h-screen">
+  <div class="max-w-4xl mx-auto mt-10 p-4">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-xl font-semibold">Grade Analysis (Visualizer)</h1>
+      <a href="index.html" class="text-sm text-blue-600 hover:underline">Back</a>
+    </div>
+
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+      <label for="analysisInput" class="block text-sm font-medium text-gray-700 mb-1">Paste marks (crude marks 0–100)</label>
+      <textarea id="analysisInput" class="w-full border border-gray-300 rounded px-3 py-2 h-32 font-mono"></textarea>
+      <p class="text-sm text-gray-500 mt-1">Accepts newline, comma, tab or space separated values. Marks will be converted to banded marks and analysed.</p>
+      <div class="text-center mt-4">
+        <button id="vizBtn" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Visualize</button>
+      </div>
+    </div>
+
+    <div id="visualizerPanel" class="hidden bg-white shadow rounded-lg p-6">
+        <div class="mb-6" id="histContainer">
+          <div class="flex items-center justify-between mb-2">
+            <h5 class="text-md font-medium">Histogram</h5>
+            <div class="space-x-2">
+              <button class="text-sm px-2 py-1 bg-gray-100 rounded" onclick="toggleFullscreen('histContainer', _histChart)">Fullscreen</button>
+              <button id="savePngBtn" class="text-sm px-2 py-1 bg-gray-100 rounded" onclick="saveChartPNG()">Save PNG</button>
+            </div>
+          </div>
+          <div class="w-full h-96">
+            <canvas id="histogramChart" class="w-full h-full"></canvas>
+          </div>
+        </div>
+
+      <div class="mt-6">
+        <h5 class="text-md font-medium mb-2">Statistics</h5>
+        <div id="statsBox" class="text-sm text-gray-700 space-y-1">
+          <div id="statMean">Mean: —</div>
+          <div id="statMedian">Median: —</div>
+          <div id="statStd">Standard deviation: —</div>
+          <div id="statQ1">Q1: —</div>
+          <div id="statQ3">Q3: —</div>
+          <div id="statMin">Min (banded): —</div>
+          <div id="statMax">Max (banded): —</div>
+          <div class="pt-2 font-medium">Grade breakdown</div>
+          <div id="statFirst">Firsts (>=70): —</div>
+          <div id="stat2up">Upper seconds (>=60 &lt;70): —</div>
+          <div id="stat2low">Lower seconds (>=50 &lt;60): —</div>
+          <div id="statThird">Thirds (>=40 &lt;50): —</div>
+          <div id="statFailNonZero">Fails (&lt;40 and &gt;0): —</div>
+          <div id="statNoCredit">No academic merit (0): —</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-sm text-gray-500 mt-4">Need to band a single value or convert lists? Use the <a href="calculator.html" class="text-blue-600 hover:underline">Banded Mark Calculator</a>.</div>
+  </div>
+
+  <div id="toastContainer"></div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const bands = [
+
+{ name:"Exceptional 1st", value:100, class:"1st", colour:"bg-purple-700"},
+
+{ name:"Very High 1st", value:94, class:"1st", colour:"bg-purple-700"},
+
+{ name:"High 1st", value:87, class:"1st", colour:"bg-purple-700"},
+
+{ name:"Mid 1st", value:80, class:"1st", colour:"bg-blue-600"},
+
+{ name:"Low 1st", value:74, class:"1st", colour:"bg-blue-600"},
+
+
+
+{ name:"High 2.1", value:68, class:"2.1", colour:"bg-green-800"},
+
+{ name:"Mid 2.1", value:65, class:"2.1", colour:"bg-green-800"},
+
+{ name:"Low 2.1", value:62, class:"2.1", colour:"bg-green-800"},
+
+
+
+{ name:"High 2.2", value:58, class:"2.2", colour:"bg-yellow-600"},
+
+{ name:"Mid 2.2", value:55, class:"2.2", colour:"bg-yellow-600"},
+
+{ name:"Low 2.2", value:52, class:"2.2", colour:"bg-yellow-600"},
+
+
+
+{ name:"High 3rd", value:48, class:"3rd", colour:"bg-amber-700"},
+
+{ name:"Mid 3rd", value:45, class:"3rd", colour:"bg-amber-700"},
+
+{ name:"Low 3rd", value:42, class:"3rd", colour:"bg-amber-700"},
+
+
+
+{ name:"Marginal Fail", value:35, class:"Fail", colour:"bg-red-600"},
+
+{ name:"Mid Fail", value:30, class:"Fail", colour:"bg-red-600"},
+
+{ name:"Low Fail", value:25, class:"Fail", colour:"bg-red-600"},
+
+{ name:"Fail", value:10, class:"Fail", colour:"bg-red-600"},
+
+
+
+{ name:"No Academic Merit", value:0, class:"No credit", colour:"bg-red-900"}
+
+];
+
+function findClosestBand(raw){
+  return bands.reduce((best,current)=>{
+    let d1=Math.abs(raw-best.value);
+    let d2=Math.abs(raw-current.value);
+    if(d2<d1 || (d2===d1 && current.value>best.value)) return current;
+    return best;
+  });
+}
+
+function showToast(message, ms=2500){
+  const container = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'mb-2 px-4 py-2 rounded shadow-lg bg-black bg-opacity-80 text-white text-sm';
+  t.innerText = message;
+  container.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity 0.4s'; setTimeout(()=>container.removeChild(t),400); }, ms);
+}
+
+// Fullscreen helper: request/exit fullscreen on container and resize histogram chart
+function toggleFullscreen(containerId, chartInstance){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  try{
+    if(!document.fullscreenElement){
+      if(el.requestFullscreen) el.requestFullscreen();
+      else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      else if(el.msRequestFullscreen) el.msRequestFullscreen();
+    } else {
+      if(document.exitFullscreen) document.exitFullscreen();
+      else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if(document.msExitFullscreen) document.msExitFullscreen();
+    }
+  }catch(e){ }
+  setTimeout(()=>{ try{ if(chartInstance) chartInstance.resize(); }catch(e){} }, 300);
+}
+
+let _histChart = null;
+
+// helper: derive a CSS background color from a Tailwind bg class by creating a temporary element
+function getColorForClass(cls){
+   // Prefer a hard-coded mapping for the Tailwind classes used in bands.
+   const map = {
+    'bg-purple-700': '#6d28d9',
+    'bg-blue-600': '#2563eb',
+    'bg-green-800': '#166534',
+    'bg-lime-500': '#84cc16',
+    'bg-yellow-600': '#ca8a04',
+    'bg-amber-700': '#b45309',
+    'bg-red-600': '#dc2626',
+    'bg-red-900': '#7f1d1d',
+    'bg-gray-700': '#374151'
+  };
+
+  if(!cls) return 'rgba(99,102,241,0.9)';
+  if(map[cls]) return map[cls];
+
+  // Fallback: attempt to read computed style from a temporary element
+  try{
+    const el = document.createElement('div');
+    el.style.position='absolute'; el.style.left='-9999px'; el.style.width='10px'; el.style.height='10px';
+    el.className = cls;
+    document.body.appendChild(el);
+    const color = getComputedStyle(el).backgroundColor;
+    document.body.removeChild(el);
+    return color || 'rgba(99,102,241,0.9)';
+  }catch(e){
+    return 'rgba(99,102,241,0.9)';
+  }
+}
+
+// Fullscreen change: resize charts after toggling fullscreen
+document.addEventListener('fullscreenchange', ()=>{
+  setTimeout(()=>{
+    try{
+      if(document.fullscreenElement){
+        const id = document.fullscreenElement.id;
+        // if container id, resize corresponding chart
+        if(id === 'histContainer') _histChart && _histChart.resize();
+      } else {
+        // exited fullscreen - resize histogram
+        _histChart && _histChart.resize();
+      }
+    }catch(e){}
+  },120);
+});
+
+function computeStats(arr){
+  if(!arr || arr.length===0) return null;
+  const n = arr.length;
+  const sum = arr.reduce((a,b)=>a+b,0);
+  const mean = sum/n;
+  const sorted = [...arr].sort((a,b)=>a-b);
+  const median = (n%2===1) ? sorted[(n-1)/2] : (sorted[n/2 -1] + sorted[n/2])/2;
+  const sq = arr.reduce((a,b)=>a + Math.pow(b-mean,2),0);
+  const std = Math.sqrt(sq / n);
+  const q1 = quantile(sorted,0.25);
+  const q3 = quantile(sorted,0.75);
+  return {mean,median,std,q1,q3,n,sorted};
+}
+
+function quantile(sortedArr, q){
+  const pos = (sortedArr.length - 1) * q;
+  const base = Math.floor(pos);
+  const rest = pos - base;
+  if(sortedArr[base+1] !== undefined){
+    return sortedArr[base] + rest * (sortedArr[base+1] - sortedArr[base]);
+  } else {
+    return sortedArr[base];
+  }
+}
+
+// small data-labels plugin for Chart.js (draws values on bars/points) - registered globally
+const dataLabelPlugin = {
+  id: 'dataLabelPlugin',
+  afterDatasetsDraw(chart, args, options){
+    // only draw if this chart has dataLabelPlugin enabled in options
+    const cfg = chart.options && chart.options.plugins && chart.options.plugins.dataLabelPlugin;
+    if(!cfg) return;
+
+    const ctx = chart.ctx;
+    chart.data.datasets.forEach((dataset, dsIndex)=>{
+      const meta = chart.getDatasetMeta(dsIndex);
+      if(!meta.data) return;
+      meta.data.forEach((element, index)=>{
+        const value = dataset.data[index];
+        if(value===undefined || value===null) return;
+        ctx.save();
+        ctx.fillStyle = cfg.color || '#111827';
+        ctx.font = (cfg.fontSize || 12) + 'px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        const pos = element.tooltipPosition();
+        ctx.fillText(value, pos.x, pos.y - 6);
+        ctx.restore();
+      });
+    });
+  }
+};
+
+// register the plugin globally so Chart knows about it
+if(window.Chart && Chart.register){
+  Chart.register(dataLabelPlugin);
+}
+
+function visualizeFromInput(){
+  const text = document.getElementById('analysisInput').value.trim();
+  if(!text){ showToast('Paste marks into the input first'); return; }
+  const values = text.split(/[\s,;\t\n]+/).map(v=>parseFloat(v)).filter(v=>!isNaN(v));
+  if(values.length===0){ showToast('No numeric marks found'); return; }
+
+  // Map to banded marks
+  const banded = values.map(v=>findClosestBand(v).value);
+  const stats = computeStats(banded);
+  if(!stats) return;
+
+  // Basic stats display
+  document.getElementById('statMean').innerText = 'Mean: ' + stats.mean.toFixed(2);
+  document.getElementById('statMedian').innerText = 'Median: ' + stats.median.toFixed(2);
+  document.getElementById('statStd').innerText = 'Standard deviation: ' + stats.std.toFixed(2);
+  document.getElementById('statQ1').innerText = 'Q1: ' + stats.q1.toFixed(2);
+  document.getElementById('statQ3').innerText = 'Q3: ' + stats.q3.toFixed(2);
+
+  // Min/max
+  const minB = Math.min(...banded);
+  const maxB = Math.max(...banded);
+  document.getElementById('statMin').innerText = 'Min (banded): ' + minB.toFixed(2);
+  document.getElementById('statMax').innerText = 'Max (banded): ' + maxB.toFixed(2);
+
+  // Grade breakdown (split fail and no-credit)
+  let cntFirst=0, cnt2up=0, cnt2low=0, cnt3=0, cntFailNonZero=0, cntNoCredit=0;
+  banded.forEach(b=>{
+    if(b===0) cntNoCredit++;
+    else if(b>=70) cntFirst++;
+    else if(b>=60) cnt2up++;
+    else if(b>=50) cnt2low++;
+    else if(b>=40) cnt3++;
+    else cntFailNonZero++;
+  });
+  document.getElementById('statFirst').innerText = 'Firsts (>=70): ' + cntFirst;
+  document.getElementById('stat2up').innerText = 'Upper seconds (>=60 <70): ' + cnt2up;
+  document.getElementById('stat2low').innerText = 'Lower seconds (>=50 <60): ' + cnt2low;
+  document.getElementById('statThird').innerText = 'Thirds (>=40 <50): ' + cnt3;
+  document.getElementById('statFailNonZero').innerText = 'Fails (<40 and >0): ' + cntFailNonZero;
+  document.getElementById('statNoCredit').innerText = 'No academic merit (0): ' + cntNoCredit;
+
+  // Histogram counts per band (preserve bands list then sort by band value)
+  const bandValues = bands.map(b=>b.value);
+  const counts = new Array(bandValues.length).fill(0);
+  banded.forEach(v=>{ const idx = bandValues.indexOf(v); if(idx>=0) counts[idx]++; });
+  const entries = bands.map((b,i)=>({ name: b.name, value: b.value, count: counts[i], colour: b.colour }));
+  // sort ascending by band value (lowest -> highest left->right)
+  entries.sort((a,b)=>a.value - b.value);
+  const bandNames = entries.map(e=>e.name);
+  const dataCounts = entries.map(e=>e.count);
+  const barColors = entries.map(e=>getColorForClass(e.colour));
+
+  document.getElementById('visualizerPanel').classList.remove('hidden');
+
+  // Create / update histogram (with data labels)
+  const histCtx = document.getElementById('histogramChart').getContext('2d');
+  if(_histChart) _histChart.destroy();
+  _histChart = new Chart(histCtx, {
+    type: 'bar',
+    data: { labels: bandNames, datasets: [{ label: 'Count', data: dataCounts, backgroundColor: barColors }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: 'Histogram — banded mark counts' },
+        dataLabelPlugin: { color: '#111827', fontSize: 12 }
+      },
+      scales: {
+        x: { title: { display: true, text: 'Grade bands' }, ticks: { maxRotation: 90, autoSkip: true } },
+        y: { title: { display: true, text: 'Count' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+// bind visualize button using DOMContentLoaded to ensure element exists and function is defined
+document.addEventListener('DOMContentLoaded', ()=>{
+  const vb = document.getElementById('vizBtn');
+  if(vb) vb.addEventListener('click', visualizeFromInput);
+});
+
+// Save histogram chart as PNG
+function saveChartPNG(){
+  if(!_histChart){ showToast('No chart to save'); return; }
+  try{
+    // Chart.js exposes toBase64Image() on the chart instance
+    const dataUrl = _histChart.toBase64Image();
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = 'histogram.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('PNG saved');
+  }catch(e){
+    try{
+      // fallback: grab canvas directly
+      const canvas = document.getElementById('histogramChart');
+      const url = canvas.toDataURL('image/png');
+      const a2 = document.createElement('a'); a2.href = url; a2.download = 'histogram.png'; document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+      showToast('PNG saved');
+    }catch(err){ showToast('Failed to save PNG'); }
+  }
+}
+
+</script>
+
+<!-- Register service worker for PWA features -->
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+      console.log('Service worker registered.', reg);
+    }).catch(err=>{
+      console.log('Service worker registration failed:', err);
+    });
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analogy Explorer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={darkMode:'class'}
+</script>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
+<script>
+if('serviceWorker' in navigator){
+window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js'));
+}
+</script>
+
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors">
+<div class="max-w-6xl mx-auto p-6">
+<div class="flex justify-between items-center mb-6">
+<div>
+<h1 class="text-4xl font-bold">Analogy Explorer</h1>
+<p class="text-slate-500">A:B = C:D proportional reasoning</p>
+</div>
+<div class="flex gap-2">
+<button id="theme" class="px-3 py-2 rounded bg-slate-700 text-white">🌙</button>
+<button id="share" class="px-3 py-2 rounded bg-blue-600 text-white">Share URL</button>
+<button id="clear" class="px-3 py-2 rounded bg-red-600 text-white">Clear</button>
+</div>
+</div>
+
+<div class="grid md:grid-cols-2 gap-6">
+<div class="bg-white dark:bg-slate-800 rounded-xl shadow p-5">
+<h2 class="font-semibold mb-4">Inputs</h2>
+<div class="grid grid-cols-2 gap-4">
+<input id="a" placeholder="A" class="p-3 rounded border bg-transparent">
+<input id="b" placeholder="B" class="p-3 rounded border bg-transparent">
+<input id="c" placeholder="C" class="p-3 rounded border bg-transparent">
+<input id="d" placeholder="D" class="p-3 rounded border bg-transparent">
+</div>
+<div class="flex flex-wrap gap-2 mt-4">
+<button id="swap" class="px-3 py-2 rounded bg-slate-600 text-white">Swap Rows</button>
+<button id="reverse" class="px-3 py-2 rounded bg-slate-600 text-white">Reverse</button>
+<button id="copy" class="px-3 py-2 rounded bg-emerald-600 text-white">Copy Result</button>
+</div>
+</div>
+
+<div class="bg-white dark:bg-slate-800 rounded-xl shadow p-5">
+<h2 class="font-semibold mb-4">Result</h2>
+<div id="status" class="text-orange-500 mb-2">Enter exactly one empty field.</div>
+<div class="space-y-2">
+<div><b>Missing:</b> <span id="missing">-</span></div>
+<div><b>Decimal:</b> <span id="decimal">-</span></div>
+<div><b>Fraction:</b> <span id="fraction">-</span></div>
+<div><b>Scientific:</b> <span id="scientific">-</span></div>
+<div><b>Scale factor:</b> <span id="scale">-</span></div>
+</div>
+</div>
+</div>
+
+<div class="grid md:grid-cols-2 gap-6 mt-6">
+<div class="bg-white dark:bg-slate-800 rounded-xl shadow p-5">
+<h2 class="font-semibold mb-4">Calculation</h2>
+<pre id="steps" class="whitespace-pre-wrap text-sm"></pre>
+</div>
+<div class="bg-white dark:bg-slate-800 rounded-xl shadow p-5">
+<h2 class="font-semibold mb-4">History</h2>
+<ul id="history" class="space-y-2 text-sm"></ul>
+</div>
+</div>
+</div>
+
+<script>
+const ids=["a","b","c","d"];
+const el=id=>document.getElementById(id);
+
+function parse(v){
+ if(v==="") return null;
+ const n=Number(v);
+ return Number.isFinite(n)?n:NaN;
+}
+function gcd(a,b){while(b){[a,b]=[b,a%b]}return a}
+function frac(x){
+ if(!isFinite(x)) return "-";
+ let sign=x<0?-1:1;x=Math.abs(x);
+ let bestN=1,bestD=1,bestErr=1e9;
+ for(let d=1;d<=10000;d++){
+  let n=Math.round(x*d);
+  let e=Math.abs(x-n/d);
+  if(e<bestErr){bestErr=e;bestN=n;bestD=d;}
+  if(e<1e-10) break;
+ }
+ let g=gcd(bestN,bestD);
+ return ((sign<0?"-":"")+bestN/g+"/"+bestD/g);
+}
+function sci(x){return Number(x).toExponential(6).replace('e',' ×10^');}
+function histLoad(){return JSON.parse(localStorage.hist||"[]")}
+function histSave(h){localStorage.hist=JSON.stringify(h)}
+function addHistory(obj){
+ let h=histLoad();
+ h.unshift(obj); h=h.slice(0,100); histSave(h); renderHistory();
+}
+function renderHistory(){
+ let ul=el("history"); ul.innerHTML="";
+ histLoad().forEach(it=>{
+  let li=document.createElement("li");
+  li.className="border-b pb-2 cursor-pointer";
+  li.textContent=`${it.a}:${it.b} = ${it.c}:${it.d}`;
+  li.onclick=()=>{
+   ids.forEach(k=>el(k).value=it[k]??"");
+   calc();
+  };
+  ul.appendChild(li);
+ });
+}
+function updateURL(vals){
+ const p=new URLSearchParams();
+ ids.forEach(k=>{if(vals[k]!==null)p.set(k,vals[k])});
+ history.replaceState({},'',location.pathname+"?"+p.toString());
+}
+function calc(){
+ let vals={}; let miss=[];
+ ids.forEach(k=>{
+  vals[k]=parse(el(k).value);
+  if(vals[k]===null) miss.push(k);
+ });
+ if(miss.length!==1){el("status").textContent="Enter exactly one empty field.";return;}
+ if(Object.values(vals).some(v=>Number.isNaN(v))){el("status").textContent="Invalid number.";return;}
+ let m=miss[0],r;
+ try{
+  switch(m){
+   case"a": if(vals.d===0)throw""; r=vals.b*vals.c/vals.d;break;
+   case"b": if(vals.c===0)throw""; r=vals.a*vals.d/vals.c;break;
+   case"c": if(vals.b===0)throw""; r=vals.a*vals.d/vals.b;break;
+   case"d": if(vals.a===0)throw""; r=vals.b*vals.c/vals.a;break;
+  }
+ }catch{el("status").textContent="Division by zero.";return;}
+ vals[m]=r;
+ el("status").textContent="Solved";
+ el("missing").textContent=r;
+ el("decimal").textContent=r.toLocaleString(undefined,{maximumFractionDigits:12});
+ el("fraction").textContent=frac(r);
+ el("scientific").textContent=sci(r);
+ if(vals.a!==0) el("scale").textContent="× "+(vals.b/vals.a);
+ el("steps").textContent=
+`${vals.a} : ${vals.b} = ${vals.c} : ${vals.d}
+
+Missing: ${m.toUpperCase()}
+Computed value = ${r}`;
+ updateURL(vals);
+ window.lastResult=r;
+ clearTimeout(window.histTimer);
+ window.histTimer=setTimeout(()=>addHistory(vals),300);
+}
+ids.forEach(id=>el(id).addEventListener("input",calc));
+el("theme").onclick=()=>document.documentElement.classList.toggle("dark");
+el("copy").onclick=()=>navigator.clipboard.writeText(String(window.lastResult??""));
+el("share").onclick=()=>navigator.clipboard.writeText(location.href);
+el("clear").onclick=()=>{ids.forEach(i=>el(i).value="");calc();}
+el("swap").onclick=()=>{
+ let a=el("a").value,b=el("b").value,c=el("c").value,d=el("d").value;
+ el("a").value=c;el("b").value=d;el("c").value=a;el("d").value=b;calc();
+}
+el("reverse").onclick=()=>{
+ ["a","b","c","d"].forEach((k,i)=>{
+ });
+ let a=el("a").value,b=el("b").value,c=el("c").value,d=el("d").value;
+ el("a").value=b;el("b").value=a;el("c").value=d;el("d").value=c;calc();
+}
+document.addEventListener("keydown",e=>{
+ if(e.ctrlKey&&e.key==="c"){e.preventDefault();el("copy").click();}
+ if(e.ctrlKey&&e.key==="s"){e.preventDefault();el("swap").click();}
+ if(e.ctrlKey&&e.key==="r"){e.preventDefault();el("reverse").click();}
+ if(e.ctrlKey&&e.key==="l"){e.preventDefault();el("clear").click();}
+});
+const qs=new URLSearchParams(location.search);
+ids.forEach(k=>{if(qs.has(k))el(k).value=qs.get(k)});
+renderHistory();calc();
+</script>
+</body>
+</html>

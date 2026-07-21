@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Grade Tools</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- PWA: web manifest and theme color -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f8fafc">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+</head>
+
+<body class="antialiased bg-gray-50 min-h-screen flex items-center justify-center">
+  <div class="max-w-xl w-full p-6">
+    <h1 class="text-2xl font-semibold text-center mb-6">Grade Tools</h1>
+    <div class="grid grid-cols-1 gap-4">
+      <a href="calculator.html" class="block text-center px-4 py-4 bg-white rounded shadow hover:bg-gray-100">Banded Mark Calculator</a>
+      <a href="analysis.html" class="block text-center px-4 py-4 bg-white rounded shadow hover:bg-gray-100">Grade Analysis & Visualizer</a>
+    </div>
+    <p class="text-sm text-gray-500 mt-6 text-center">Use the banded calculator to convert single or bulk marks. Use the Grade Analysis page to visualise class distributions.</p>
+  </div>
+
+  <!-- Register service worker for PWA features -->
+  <script>
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('sw.js').then(reg=>{
+        console.log('Service worker registered.', reg);
+      }).catch(err=>{
+        console.log('Service worker registration failed:', err);
+      });
+    });
+  }
+  </script>
+</body>
+</html>

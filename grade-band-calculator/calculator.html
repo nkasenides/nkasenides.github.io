@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Banded Mark Calculator</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- PWA manifest and theme color -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f8fafc">
+</head>
+<body class="antialiased bg-gray-50 min-h-screen">
+  <div class="max-w-3xl mx-auto mt-10 p-4">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-xl font-semibold">Banded Mark Calculator</h1>
+      <a href="index.html" class="text-sm text-blue-600 hover:underline">Back</a>
+    </div>
+
+    <div class="bg-white shadow rounded-lg mb-6 p-6">
+      <label for="rawMark" class="block text-sm font-medium text-gray-700 mb-1">Crude mark (0–100)</label>
+      <input id="rawMark" type="number" min="0" max="100" step="0.1" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+      <p class="text-sm text-gray-500 mt-2">Single value → nearest grade band</p>
+      <div class="text-center mt-4">
+        <button class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700" onclick="calculateBand()">Calculate</button>
+      </div>
+    </div>
+
+    <div id="resultCard" class="bg-white shadow rounded-lg result-card hidden">
+      <div id="resultColour" class="p-6 text-white">
+        <div id="bandName" class="band-title text-lg"></div>
+        <div id="bandMark" class="band-mark text-3xl font-bold mt-2"></div>
+        <div id="distanceText" class="mt-2"></div>
+      </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg mb-6 mt-6 p-6">
+      <h2 class="text-lg font-medium">Bulk conversion</h2>
+      <label for="bulkInput" class="block text-sm font-medium text-gray-700 mb-1 mt-3">Paste marks from Excel (column or row)</label>
+      <textarea id="bulkInput" class="w-full border border-gray-300 rounded px-3 py-2 h-32 font-mono"></textarea>
+      <p class="text-sm text-gray-500 mt-1">Accepts newline, comma, tab or space separated values</p>
+      <div class="text-center mt-4">
+        <button class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onclick="processBulk()">Convert list</button>
+      </div>
+      <div id="bulkResults" class="mt-4"></div>
+    </div>
+
+    <div class="text-center text-sm text-gray-500">Want charts? Use the <a href="analysis.html" class="text-blue-600 hover:underline">Grade Analysis</a> page.</div>
+  </div>
+
+  <div id="toastContainer"></div>
+
+<script>
+const bands = [
+{ name:"Exceptional 1st", value:100, class:"1st", colour:"bg-purple-700"},
+{ name:"Very High 1st", value:94, class:"1st", colour:"bg-purple-700"},
+{ name:"High 1st", value:87, class:"1st", colour:"bg-purple-700"},
+{ name:"Mid 1st", value:80, class:"1st", colour:"bg-blue-600"},
+{ name:"Low 1st", value:74, class:"1st", colour:"bg-blue-600"},
+
+{ name:"High 2.1", value:68, class:"2.1", colour:"bg-green-800"},
+{ name:"Mid 2.1", value:65, class:"2.1", colour:"bg-green-800"},
+{ name:"Low 2.1", value:62, class:"2.1", colour:"bg-green-800"},
+
+{ name:"High 2.2", value:58, class:"2.2", colour:"bg-lime-500"},
+{ name:"Mid 2.2", value:55, class:"2.2", colour:"bg-lime-500"},
+{ name:"Low 2.2", value:52, class:"2.2", colour:"bg-lime-500"},
+
+{ name:"High 3rd", value:48, class:"3rd", colour:"bg-amber-600"},
+{ name:"Mid 3rd", value:45, class:"3rd", colour:"bg-amber-600"},
+{ name:"Low 3rd", value:42, class:"3rd", colour:"bg-amber-600"},
+
+{ name:"Marginal Fail", value:35, class:"Fail", colour:"bg-red-600"},
+{ name:"Mid Fail", value:30, class:"Fail", colour:"bg-red-600"},
+{ name:"Low Fail", value:25, class:"Fail", colour:"bg-red-600"},
+{ name:"Fail", value:10, class:"Fail", colour:"bg-red-600"},
+
+{ name:"No Academic Merit", value:0, class:"No credit", colour:"bg-red-900"}
+];
+
+function findClosestBand(raw){
+  return bands.reduce((best,current)=>{
+    let d1=Math.abs(raw-best.value);
+    let d2=Math.abs(raw-current.value);
+    if(d2<d1 || (d2===d1 && current.value>best.value)) return current;
+    return best;
+  });
+}
+
+function showToast(message, ms=2500){
+  const container = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'mb-2 px-4 py-2 rounded shadow-lg bg-black bg-opacity-80 text-white text-sm';
+  t.innerText = message;
+  container.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity 0.4s'; setTimeout(()=>container.removeChild(t),400); }, ms);
+}
+
+function calculateBand(){
+  const raw=parseFloat(document.getElementById("rawMark").value);
+  if(isNaN(raw) || raw<0 || raw>100){ showToast("Enter value 0–100"); return; }
+  let band=findClosestBand(raw);
+  displaySingle(raw,band);
+}
+
+function displaySingle(raw,band){
+  document.getElementById("resultCard").classList.remove('hidden');
+  let colourPanel=document.getElementById("resultColour");
+  colourPanel.className="p-6 text-white "+band.colour+" rounded-t-lg";
+  document.getElementById("bandName").innerText=band.name+" ("+band.class+")";
+  document.getElementById("bandMark").innerText="Banded mark: "+band.value;
+  let diff=(band.value-raw).toFixed(2);
+  document.getElementById("distanceText").innerText="Adjustment: "+(diff>=0?"+":"")+diff;
+}
+
+function processBulk(){
+  let text=document.getElementById("bulkInput").value.trim();
+  if(!text) return;
+  let values=text.split(/[\s,;\t\n]+/);
+  let rows=[];
+  values.forEach(v=>{ let raw=parseFloat(v); if(!isNaN(raw)){ let band=findClosestBand(raw); let diff=(band.value-raw).toFixed(2); rows.push(`<tr class="${band.colour} text-white"><td class="px-4 py-2">${raw}</td><td class="px-4 py-2">${band.value}</td><td class="px-4 py-2">${band.name}</td><td class="px-4 py-2">${band.class}</td><td class="px-4 py-2">${diff>=0?"+":""}${diff}</td></tr>`); } });
+  document.getElementById("bulkResults").innerHTML=`<table class="min-w-full divide-y divide-gray-200 table-auto border-collapse"><thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Crude</th><th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Banded</th><th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Band</th><th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Class</th><th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Adjust</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">${rows.join("")}</tbody></table>`;
+}
+</script>
+
+<!-- Register service worker for PWA features -->
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+      console.log('Service worker registered.', reg);
+    }).catch(err=>{
+      console.log('Service worker registration failed:', err);
+    });
+  });
+}
+</script>
+</body>
+</html>
