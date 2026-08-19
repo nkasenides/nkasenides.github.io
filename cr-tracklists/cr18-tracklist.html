@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Cosmic Rays 18</title>
+
+<style>
+:root {
+  --bg: #060816;
+  --panel: rgba(13, 18, 38, 0.88);
+  --panel-2: rgba(18, 25, 52, 0.92);
+  --text: #f4f7ff;
+  --muted: #9da9c8;
+  --accent: #8b5cf6;
+  --accent-2: #22d3ee;
+  --line: rgba(255,255,255,0.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(34,211,238,.13), transparent 28%),
+    radial-gradient(circle at 85% 18%, rgba(139,92,246,.18), transparent 32%),
+    radial-gradient(circle at 50% 100%, rgba(59,130,246,.10), transparent 35%),
+    var(--bg);
+  padding: 42px 20px 70px;
+}
+
+.container {
+  width: min(100%, 1040px);
+  margin: 0 auto;
+}
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 52px 42px 38px;
+  border: 1px solid var(--line);
+  border-radius: 28px 28px 0 0;
+  background: linear-gradient(135deg, rgba(17,25,57,.96), rgba(8,11,28,.96));
+  box-shadow: 0 25px 80px rgba(0,0,0,.32);
+}
+
+.hero::before, .hero::after {
+  content: "";
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  filter: blur(2px);
+  opacity: .45;
+}
+.hero::before {
+  right: -90px; top: -105px;
+  background: radial-gradient(circle, rgba(139,92,246,.65), transparent 68%);
+}
+.hero::after {
+  left: 48%; bottom: -180px;
+  background: radial-gradient(circle, rgba(34,211,238,.35), transparent 68%);
+}
+
+.eyebrow {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--accent-2);
+  font-size: .76rem;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.eyebrow::before {
+  content: "✦";
+  font-size: 1rem;
+}
+
+.set-title {
+  position: relative;
+  z-index: 1;
+  margin: 12px 0 8px;
+  font-size: clamp(2.2rem, 7vw, 4.6rem);
+  line-height: .98;
+  letter-spacing: -.045em;
+  font-weight: 850;
+  background: linear-gradient(90deg, #fff, #c4b5fd 48%, #67e8f9);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.subtitle {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-radius: 0 0 28px 28px;
+  background: var(--panel);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 25px 80px rgba(0,0,0,.22);
+}
+
+.card-content {
+  padding: 28px;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+
+.card-title::after {
+  content: "52 tracks";
+  padding: 6px 10px;
+  border: 1px solid rgba(139,92,246,.32);
+  border-radius: 999px;
+  color: #d8ccff;
+  background: rgba(139,92,246,.10);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.tracklist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: tracks;
+  display: grid;
+  gap: 8px;
+}
+
+.track-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 15px 16px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  background: linear-gradient(90deg, rgba(255,255,255,.035), rgba(255,255,255,.015));
+  transition: transform .2s ease, border-color .2s ease, background .2s ease;
+}
+
+.track-item:hover {
+  transform: translateX(4px);
+  border-color: rgba(139,92,246,.38);
+  background: linear-gradient(90deg, rgba(139,92,246,.13), rgba(34,211,238,.055));
+}
+
+.track-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex: 1;
+}
+
+.track-order {
+  display: grid;
+  place-items: center;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(34,211,238,.18);
+  border-radius: 12px;
+  color: #b7f4ff;
+  background: rgba(34,211,238,.055);
+  font-size: .78rem;
+  font-weight: 850;
+}
+
+.track-copy { min-width: 0; }
+
+.track-name {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 760;
+  line-height: 1.35;
+}
+
+.track-artists {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: .88rem;
+  line-height: 1.4;
+}
+
+.track-time {
+  display: none;
+}
+
+.footer-note {
+  margin-top: 22px;
+  color: #6f7b9d;
+  text-align: center;
+  font-size: .78rem;
+}
+
+@media (max-width: 640px) {
+  body { padding: 20px 12px 42px; }
+  .hero { padding: 38px 24px 30px; border-radius: 22px 22px 0 0; }
+  .card { border-radius: 0 0 22px 22px; }
+  .card-content { padding: 16px; }
+  .track-item { padding: 13px 12px; gap: 12px; }
+  .track-main { gap: 12px; }
+  .track-order { flex-basis: 34px; width: 34px; height: 34px; }
+  .track-name { font-size: .94rem; }
+  .track-artists { font-size: .82rem; }
+}
+</style>
+</head>
+<body>
+<div class="container"><header class="hero"><div class="eyebrow">Nicos Kasenides • Trance Journey</div><h1 class="set-title">Cosmic Rays 18</h1><p class="subtitle">A cosmic voyage through uplifting, progressive and peak-time trance.</p></header>
+
+<div class="card white">
+<div class="card-content">
+<span class="card-title">Tracklist</span>
+<ul class="tracklist">
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">1.</div>
+<div class="track-copy">
+<p class="track-name">Extreme Ways (Intro Mix)</p>
+<div class="track-artists">Armin van Buuren &amp; Moby</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">2.</div>
+<div class="track-copy">
+<p class="track-name">Hold That Sucker Down (Hel:sløwed Extended Remix)</p>
+<div class="track-artists">Jerome Isma-Ae</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">3.</div>
+<div class="track-copy">
+<p class="track-name">Touch Me (Mike Koglin 2.0 Remix)</p>
+<div class="track-artists">Paul Oakenfold feat. Cassandra Fox</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">4.</div>
+<div class="track-copy">
+<p class="track-name">Sunny Days (Extended Club Mix)</p>
+<div class="track-artists">Armin van Buuren feat. Josh Cumbee</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">5.</div>
+<div class="track-copy">
+<p class="track-name">Suddenly Summer (Norin &amp; Rad Remix)</p>
+<div class="track-artists">Armin van Buuren feat. Ana Criado</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">6.</div>
+<div class="track-copy">
+<p class="track-name">Drifting Away (Marsh Extended Remix)</p>
+<div class="track-artists">Lange ft. Skye</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">7.</div>
+<div class="track-copy">
+<p class="track-name">Light Years (Extended Mix)</p>
+<div class="track-artists">Elysian</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">8.</div>
+<div class="track-copy">
+<p class="track-name">Caligula (Club Mix)</p>
+<div class="track-artists">Stoneface &amp; Terminal</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">9.</div>
+<div class="track-copy">
+<p class="track-name">Sound Of You (extended mix)</p>
+<div class="track-artists">Armin Van Buuren &amp; Rob Swire</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">10.</div>
+<div class="track-copy">
+<p class="track-name">Follow The Light (extended mix)</p>
+<div class="track-artists">Akille &amp; Juna Rose</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">11.</div>
+<div class="track-copy">
+<p class="track-name">Escape (Heatbeat Remix)</p>
+<div class="track-artists">Sebastien feat Satellite Empire</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">12.</div>
+<div class="track-copy">
+<p class="track-name">R4VE 301 (Extended Mix)</p>
+<div class="track-artists">Ahmed Helmy</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">13.</div>
+<div class="track-copy">
+<p class="track-name">Have My Heart (Extended Mix)</p>
+<div class="track-artists">Two&amp;One and Cathy Burton</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">14.</div>
+<div class="track-copy">
+<p class="track-name">Fulfillment (Extended Mix)</p>
+<div class="track-artists">Ferry Corsten</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">15.</div>
+<div class="track-copy">
+<p class="track-name">Where life takes us</p>
+<div class="track-artists">Ben Gold</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">16.</div>
+<div class="track-copy">
+<p class="track-name">Reasons To Forgive (The Blizzard Remix)</p>
+<div class="track-artists">Tenishia - Reasons To Forgive</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">17.</div>
+<div class="track-copy">
+<p class="track-name">Humming The Lights (Full Version)</p>
+<div class="track-artists">Armin van Buuren presents Gaia</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">18.</div>
+<div class="track-copy">
+<p class="track-name">Sun Gone Down</p>
+<div class="track-artists">Protoculture Feat  Shannon Hurley</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">19.</div>
+<div class="track-copy">
+<p class="track-name">Stellar</p>
+<div class="track-artists">Gaia</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">20.</div>
+<div class="track-copy">
+<p class="track-name">Home (Daniel Kandi Retrofit Remix)</p>
+<div class="track-artists">Susana</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">21.</div>
+<div class="track-copy">
+<p class="track-name">Unity (Extended Mix)</p>
+<div class="track-artists">Gareth Emery &amp; Omnia</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">22.</div>
+<div class="track-copy">
+<p class="track-name">Can We Still Feel (EXTASIA Extended Mix)</p>
+<div class="track-artists">Andrew Rayel</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">23.</div>
+<div class="track-copy">
+<p class="track-name">The Awakening (Transmission Extended 2023 Theme) [COLDHARBOUR RECORDINGS]</p>
+<div class="track-artists">Daxson VS XiJaro &amp; Pitch</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">24.</div>
+<div class="track-copy">
+<p class="track-name">Voyager</p>
+<div class="track-artists">C-Systems</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">25.</div>
+<div class="track-copy">
+<p class="track-name">Now Or Never (Craig Connelly Extended Remix)</p>
+<div class="track-artists">Daxson</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">26.</div>
+<div class="track-copy">
+<p class="track-name">On My Way To Heaven (Above &amp; Beyond Club Mix)</p>
+<div class="track-artists">Above &amp; Beyond feat. Richard Bedford</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">27.</div>
+<div class="track-copy">
+<p class="track-name">Same Stars (Original Mix)</p>
+<div class="track-artists">Paul Denton &amp; Sue McLaren</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">28.</div>
+<div class="track-copy">
+<p class="track-name">Next to you</p>
+<div class="track-artists">Darude</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">29.</div>
+<div class="track-copy">
+<p class="track-name">More Than Love (Craig Connelly Extended Remix) [AVA WHITE]</p>
+<div class="track-artists">Andy Moor, Somna &amp; Linney</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">30.</div>
+<div class="track-copy">
+<p class="track-name">Sun In Your Eyes (Daniel Kandi Extended Mix)</p>
+<div class="track-artists">Above &amp; Beyond</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">31.</div>
+<div class="track-copy">
+<p class="track-name">An Angel's Love (Vocal Mix)</p>
+<div class="track-artists">Alex M.O.R.P.H. ft. Sylvia Tosun</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">32.</div>
+<div class="track-copy">
+<p class="track-name">The Perfect Match</p>
+<div class="track-artists">Aligator Feat. Daniel Kandi</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">33.</div>
+<div class="track-copy">
+<p class="track-name">Marathon ( Simon O'Shine Mix)</p>
+<div class="track-artists">Simon O'Shine &amp; Adam Navel</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">34.</div>
+<div class="track-copy">
+<p class="track-name">Your Distant World (Original Mix)</p>
+<div class="track-artists">Simon O'Shine</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">35.</div>
+<div class="track-copy">
+<p class="track-name">Light Up Love (Aion Flow Extended Remix)</p>
+<div class="track-artists">Ciaran McAuley, Siskin, and Geronimo</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">36.</div>
+<div class="track-copy">
+<p class="track-name">Stole the sun (Allen &amp; Envy Remix)</p>
+<div class="track-artists">Dart Rayne &amp; Yura Moonlight and Katty Heath</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">37.</div>
+<div class="track-copy">
+<p class="track-name">The Unknown (Extended Mix)</p>
+<div class="track-artists">Aly &amp; Fila</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">38.</div>
+<div class="track-copy">
+<p class="track-name">What Took You So Long (Extended Mix)</p>
+<div class="track-artists">Armin van Buuren &amp; Gryffin</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">39.</div>
+<div class="track-copy">
+<p class="track-name">Dreaming</p>
+<div class="track-artists">Matty Ralph</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">40.</div>
+<div class="track-copy">
+<p class="track-name">Sky Falls Down (Above &amp; Beyond Club Mix)</p>
+<div class="track-artists">Oceanlab</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">41.</div>
+<div class="track-copy">
+<p class="track-name">If You Should Go (Aly &amp; Fila Remix)</p>
+<div class="track-artists">Armin van Buuren feat. Susana</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">42.</div>
+<div class="track-copy">
+<p class="track-name">Lift (Extended Mix)</p>
+<div class="track-artists">Sean Tyas</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">43.</div>
+<div class="track-copy">
+<p class="track-name">Close My Eyes (Lemon and Einar K Remix)</p>
+<div class="track-artists">C-Systems</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">44.</div>
+<div class="track-copy">
+<p class="track-name">Chasing The Unknown</p>
+<div class="track-artists">EXTASIA</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">45.</div>
+<div class="track-copy">
+<p class="track-name">Not Afraid To Fall (The WLT Extended Remix)</p>
+<div class="track-artists">Markus Schulz &amp; Christina Novelli</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">46.</div>
+<div class="track-copy">
+<p class="track-name">Dynamite (Christopher Corrigan Remix)</p>
+<div class="track-artists">Gareth Emery Feat. Christina Novelli</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">47.</div>
+<div class="track-copy">
+<p class="track-name">Silhouette (Allen &amp; Envy Remix)</p>
+<div class="track-artists">Dart Rayne &amp; Yura Moonlight and Sarah Lynn</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">48.</div>
+<div class="track-copy">
+<p class="track-name">Sweet Release (Extended Mix)</p>
+<div class="track-artists">Scott Bond &amp; Charlie Walker vs Trouser Enthusiasts</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">49.</div>
+<div class="track-copy">
+<p class="track-name">Lights Will Guide You Home (Original Mix)</p>
+<div class="track-artists">Driftmoon</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">50.</div>
+<div class="track-copy">
+<p class="track-name">MONEY ON THE DASH (Armin van Buuren Remix)</p>
+<div class="track-artists">Elley Duhé</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">51.</div>
+<div class="track-copy">
+<p class="track-name">Follow The Light (Extended Mix)</p>
+<div class="track-artists">Armin van Buuren &amp; Hardwell</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+<li class="track-item">
+<div class="track-main">
+<div class="track-order">52.</div>
+<div class="track-copy">
+<p class="track-name">Always You (A State of Trance 2026 ELEVATION Anthem)</p>
+<div class="track-artists">Armin van Buuren &amp; Richard Durand &amp; Dicosis</div>
+</div>
+</div>
+<div class="track-time">-</div>
+</li>
+</ul>
+<div class="footer-note">Cosmic Rays 18 • 52 carefully selected tracks</div></div>
+</div>
+</div>
+
+</body>
+</html>
